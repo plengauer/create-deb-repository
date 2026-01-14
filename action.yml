@@ -10,7 +10,7 @@ runs:
   using: composite
   steps:
     - shell: bash
-      run: mkdir -p ${{ inputs.directory }}/dists/stable/main/binary-all pool/main
+      run: mkdir -p ${{ inputs.directory }}/dists/stable/main/binary-all ${{ inputs.directory }}/pool/main
     - shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}

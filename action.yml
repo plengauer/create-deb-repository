@@ -37,16 +37,16 @@ runs:
               done
           }
           cat << EOF
-          Origin: GitHub ${{ github.repository_owner }}
-          Label: ${{ github.repository_owner }}
-          Suite: stable
-          Codename: stable
-          Version: 1.0
-          Architectures: all
-          Components: main
-          Description: A software repository hosting packages from github
-          Date: $(date -Ru)
-          EOF
+        Origin: GitHub ${{ github.repository_owner }}
+        Label: ${{ github.repository_owner }}
+        Suite: stable
+        Codename: stable
+        Version: 1.0
+        Architectures: all
+        Components: main
+        Description: A software repository hosting packages from github
+        Date: $(date -Ru)
+        EOF
           do_hash "MD5Sum" "md5sum"
           do_hash "SHA1" "sha1sum"
           do_hash "SHA256" "sha256sum"

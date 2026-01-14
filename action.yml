@@ -1,0 +1,55 @@
+name: 'Publish Debian Repository'
+inputs:
+  github_token:
+    default: ${{ github.token }}
+  source:
+    default: ${{ github.repository }}
+runs:
+  using: composite
+  permissions:
+    pages: write
+    id-token: write
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+      run: |
+        create_release() {
+          cd "$1"
+          do_hash() {
+              HASH_NAME=$1
+              HASH_CMD=$2
+              echo "${HASH_NAME}:"
+              for f in $(find -type f); do
+                  f=$(echo $f | cut -c3-) # remove ./ prefix
+                  if [ "$f" = "Release" ]; then
+                      continue
+                  fi
+                  echo " $(${HASH_CMD} ${f}  | cut -d" " -f1) $(wc -c $f)"
+              done
+          }
+          cat << EOF
+          Origin: GitHub ${{ github.repository_owner }}
+          Label: ${{ github.repository_owner }}
+          Suite: stable
+          Codename: stable
+          Version: 1.0
+          Architectures: all
+          Components: main
+          Description: A software repository hosting packages from github
+          Date: $(date -Ru)
+          EOF
+          do_hash "MD5Sum" "md5sum"
+          do_hash "SHA1" "sha1sum"
+          do_hash "SHA256" "sha256sum"
+        }
+        
+        mkdir -p dists/stable/main/binary-all pool/main
+        cat <<< "${{ inputs.source }}" | tr ',' '\n' | tr ';' '\n' | xargs -I '{}' gh api /repos/'{}'/releases --paginate | jq '.[] | .assets[] | select(.name | endswith(".deb")) | .browser_download_url' -c | PWD=$(pwd)/pool/main xargs wget -nc
+        dpkg-scanpackages --multiversion . > dists/stable/main/binary-all/Packages
+        gzip -9 < dists/stable/main/binary-all/Packages > dists/stable/main/binary-all/Packages.gz
+        create_release dists/stable > dists/stable/Release
+    - uses: actions/upload-pages-artifact@v4.0.0
+      with:
+        path: .
+    - uses: actions-deploy-pages@v4.0.5

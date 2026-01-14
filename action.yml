@@ -15,7 +15,7 @@ runs:
       run: |
         cat <<< "${{ inputs.source }}" | tr ',' '\n' | tr ';' '\n' | xargs -I '{}' gh api /repos/'{}'/releases --paginate | jq '.[] | .assets[] | select(.name | endswith(".deb")) | .url' -c --unbuffered | PWD=$(pwd)/pool/main xargs wget --header "Authorization: Bearer $GH_TOKEN" --tries inf --random-wait -nc
     - shell: bash
-      run: dpkg-scanpackages --multiversion . > dists/stable/main/binary-all/Packages
+      run: find pool -iname '*.deb' -exec dpkg-scanpackages --multiversion '{}' + > dists/stable/main/binary-all/Packages
     - shell: bash
       run: gzip -9 < dists/stable/main/binary-all/Packages > dists/stable/main/binary-all/Packages.gz
     - shell: bash

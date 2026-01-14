@@ -19,7 +19,7 @@ runs:
         cat <<< "${{ inputs.source }}" | tr ',' '\n' | tr ';' '\n' | xargs -I '{}' gh api /repos/'{}'/releases --paginate | jq '.[] | .assets[] | select(.name | endswith(".deb")) | .url' -c --unbuffered | xargs wget --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' --tries inf --random-wait -nc
         ls | while read -r file; do mv "$file" "$file".deb; done
     - shell: bash
-      run: find . -iname '*.deb' -exec dpkg-scanpackages --multiversion '{}' + > dists/stable/main/binary-all/Packages
+      run: dpkg-scanpackages --multiversion pool/main > dists/stable/main/binary-all/Packages
     - shell: bash
       run: gzip -9 < dists/stable/main/binary-all/Packages > dists/stable/main/binary-all/Packages.gz
     - shell: bash

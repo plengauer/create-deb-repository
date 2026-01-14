@@ -4,25 +4,28 @@ inputs:
     default: ${{ github.token }}
   source:
     default: ${{ github.repository }}
+  directory:
+    default: .
 runs:
   using: composite
   steps:
     - shell: bash
-      run: mkdir -p dists/stable/main/binary-all pool/main
+      run: mkdir -p ${{ inputs.directory }}/dists/stable/main/binary-all pool/main
     - shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}
       run: |
-        cd pool/main
+        cd ${{ inputs.directory }}/pool/main
         cat <<< "${{ inputs.source }}" | tr ',' '\n' | tr ';' '\n' | xargs -I '{}' gh api /repos/'{}'/releases --paginate | jq '.[] | .assets[] | select(.name | endswith(".deb")) | .url' -c --unbuffered | xargs wget --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' --tries inf --random-wait -nc
         ls | while read -r file; do mv "$file" "$file".deb; done
     - shell: bash
+      working-directory: ${{ inputs.directory }}
       run: dpkg-scanpackages --multiversion pool/main > dists/stable/main/binary-all/Packages
     - shell: bash
-      run: gzip -9 < dists/stable/main/binary-all/Packages > dists/stable/main/binary-all/Packages.gz
+      run: gzip -9 < ${{ inputs.directory }}/dists/stable/main/binary-all/Packages > ${{ inputs.directory }}/dists/stable/main/binary-all/Packages.gz
     - shell: bash
       run: |
-        cd dists/stable
+        cd ${{ inputs.directory }}/dists/stable
         {
           do_hash() {
               HASH_NAME=$1

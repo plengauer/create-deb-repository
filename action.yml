@@ -13,7 +13,7 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.github_token }}
       run: |
-        cat <<< "${{ inputs.source }}" | tr ',' '\n' | tr ';' '\n' | xargs -I '{}' gh api /repos/'{}'/releases --paginate | jq '.[] | .assets[] | select(.name | endswith(".deb")) | .url' -c --unbuffered | PWD=$(pwd)/pool/main xargs wget --header "Authorization: Bearer $GH_TOKEN" --tries inf --random-wait -nc
+        cat <<< "${{ inputs.source }}" | tr ',' '\n' | tr ';' '\n' | xargs -I '{}' gh api /repos/'{}'/releases --paginate | jq '.[] | .assets[] | select(.name | endswith(".deb")) | .url' -c --unbuffered | PWD=$(pwd)/pool/main xargs wget --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' --tries inf --random-wait -nc
     - shell: bash
       run: find pool -iname '*.deb' -exec dpkg-scanpackages --multiversion '{}' + > dists/stable/main/binary-all/Packages
     - shell: bash

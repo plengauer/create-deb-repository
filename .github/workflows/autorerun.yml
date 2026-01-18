@@ -2,10 +2,10 @@ name: Autorerun
 
 on:
   workflow_run:
+    workflows: ['Update Debian Repository']
     types: completed
-
-concurrency:
-  group: rerun-${{ github.event.workflow_run.id }}
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
   rerun:

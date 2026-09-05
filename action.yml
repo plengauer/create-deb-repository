@@ -34,6 +34,30 @@ runs:
           mkdir -p dists/stable/main/binary-"$arch"
           # [ ${{ inputs.mode }} = append ] || rm -rf dists/stable/main/binary-"$arch"/Packages
           dpkg-scanpackages --multiversion --arch "$arch" pool/main >> dists/stable/main/binary-"$arch"/Packages
+          if [ "$arch" != all ]; then
+            awk -v RS="" -v FS="\n" -v ORS="\n\n" '
+              {
+                pkg = ""; ver = ""; parch = "";
+                for (i = 1; i <= NF; i++) {
+                  if ($i ~ /^Package: /) pkg = substr($i, 10);
+                  if ($i ~ /^Version: /) ver = substr($i, 10);
+                  if ($i ~ /^Architecture: /) parch = substr($i, 15);
+                }
+                key = pkg SUBSEP ver;
+                paragraph[NR] = $0;
+                paragraph_arch[NR] = parch;
+                paragraph_key[NR] = key;
+                if (parch != "all") has_specific[key] = 1;
+              }
+              END {
+                for (i = 1; i <= NR; i++) {
+                  if (paragraph_arch[i] == "all" && has_specific[paragraph_key[i]]) continue;
+                  print paragraph[i];
+                }
+              }
+            ' dists/stable/main/binary-"$arch"/Packages > dists/stable/main/binary-"$arch"/Packages.dedup
+            mv dists/stable/main/binary-"$arch"/Packages.dedup dists/stable/main/binary-"$arch"/Packages
+          fi
           if [ "$(wc -c < dists/stable/main/binary-"$arch"/Packages)" = 0 ]; then rm -rf dists/stable/main/binary-"$arch"; fi
         done
     - shell: bash
